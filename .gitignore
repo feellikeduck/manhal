@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+eval/results-*.csv
+eval/cases.json
+node_modules/
+.DS_Store
+supabase/.temp/
+supabase/.branches/
