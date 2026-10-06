@@ -31,11 +31,13 @@ export function extractQuotes(text: string): string[] {
  * إذا كتب المودل آية أو حديثاً بنفسه، نتحقق أن النص موجود فعلاً.
  * يُشغَّل على ناتج المودل الخام قبل استبدال الرموز.
  */
-export async function checkFreeQuotes(rawModelText: string): Promise<Check[]> {
+export async function checkFreeQuotes(rawModelText: string, sources: { text: string }[] = []): Promise<Check[]> {
   const quotes = extractQuotes(rawModelText);
   if (!quotes.length) return [{ name: "free_quotes", ok: true, severity: "error" }];
   const bad: string[] = [];
   for (const q of quotes.slice(0, 6)) {
+    // اقتباس حرفي من مصدر أُعطي للمودل (مثل تعريف قاموس الحزمة) مقبول
+    if (sources.some((s) => containsText(s.text, q))) continue;
     const [qm, hm] = await Promise.all([matchQuranText(q, 1), matchHadithText(q, 1)]);
     const best = Math.max(qm[0]?.score ?? 0, hm[0]?.score ?? 0);
     if (best < config.threshold.quote) bad.push(q.slice(0, 60));

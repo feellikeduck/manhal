@@ -37,7 +37,7 @@ export async function finalize(opts: {
   requireCitations?: boolean;
 }): Promise<Finalized> {
   const { raw, sources, lang, level } = opts;
-  const quoteChecks = await checkFreeQuotes(raw);
+  const quoteChecks = await checkFreeQuotes(raw, sources);
   const resolved = await resolvePlaceholders(raw, lang, sources);
   const { checks: citeChecks, cited } = checkCitations(resolved.text, sources);
   const glossaryChecks = checkGlossary(resolved.text, lang, opts.contextTerms ?? []);
@@ -62,7 +62,13 @@ export async function finalize(opts: {
     disclosure: disclosure(lang),
   };
   if (status === "referral") {
-    result.referral = { text: lang === "ar" ? config.referral.ar : config.referral.en, url: config.referral.url };
+    const personal = level === "D";
+    result.referral = {
+      text: lang === "ar"
+        ? (personal ? config.referral.ar : config.referral.generalAr)
+        : (personal ? config.referral.en : config.referral.generalEn),
+      url: config.referral.url,
+    };
   }
   return result;
 }

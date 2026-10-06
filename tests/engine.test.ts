@@ -145,3 +145,34 @@ Deno.test("isWholeAyah: النص القصير يُقبل إذا كان آية ك
   assert(isWholeAyah("قل هو الله أحد", "قُلْ هُوَ اللَّهُ أَحَدٌ"));
   assert(!isWholeAyah("قل هو الله أحد", "الله أحد"));
 });
+
+Deno.test("قاموس الحزمة: التوحيد يصير مصدراً يُستشهد به", async () => {
+  const { findTerms } = await import("../supabase/functions/manhal/lib/glossary.ts");
+  const { packageTermSources } = await import("../supabase/functions/manhal/lib/package-terms.ts");
+  const src = packageTermSources(findTerms("ما معنى التوحيد؟"), "ar");
+  assertEquals(src.length, 1);
+  assertEquals(src[0].type, "term");
+  assertEquals(src[0].ref, "term:tawhid");
+  assert(src[0].text.includes("إفراد الله بالربوبية والألوهية"));
+  assertEquals(packageTermSources(findTerms("كم عدد ركعات الفجر؟"), "ar").length, 0);
+});
+
+Deno.test("checkFreeQuotes: الاقتباس من مصدر مُعطى للمودل مقبول بدون بحث في القاعدة", async () => {
+  const { checkFreeQuotes } = await import("../supabase/functions/manhal/lib/checks.ts");
+  const sources = [{ text: "التوحيد: يفضل إبقاء المصطلح مع شرح معناه إفراد الله بالربوبية والألوهية ووصفه بما جاء الوحي به" }];
+  const [c] = await checkFreeQuotes("التوحيد هو «إفراد الله بالربوبية والألوهية» [S1]", sources);
+  assert(c.ok);
+});
+
+Deno.test("dedupeSources: يحذف المكرر ويحافظ على الترتيب", async () => {
+  const { dedupeSources } = await import("../supabase/functions/manhal/lib/sources.ts");
+  const a = { sid: "", type: "quran" as const, ref: "5:6", title: "", text: "" };
+  const b = { sid: "", type: "hadith" as const, ref: "hadeethenc:3534", title: "", text: "" };
+  assertEquals(dedupeSources([a, b, { ...a }]).map((s) => s.ref), ["5:6", "hadeethenc:3534"]);
+});
+
+Deno.test("hintSources: بدون عبارات صالحة ما يبحث", async () => {
+  const { hintSources } = await import("../supabase/functions/manhal/lib/sources.ts");
+  assertEquals(await hintSources(undefined, "ar"), []);
+  assertEquals(await hintSources(["كلمة"], "ar"), []); // أقل من كلمتين
+});

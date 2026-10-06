@@ -17,6 +17,11 @@ export const config = {
       "هذا السؤال خارج نطاق منهل: منهل لا يحكم على الأشخاص أو الجماعات، ولا يفصل في النزاعات الخاصة. ننصحك بعرضه على أهل العلم أو الجهة المختصة.",
     outOfScopeEn:
       "This is outside Manhal's scope: Manhal does not pass judgment on individuals or groups, or settle private disputes. Please consult scholars or the competent authority.",
+    // إحالة لسؤال عام لم تكفِ له المصادر (المستوى ج أو الامتناع) — ليس حالة شخصية
+    generalAr:
+      "هذه المسألة تحتاج إلى بيان من أهل العلم، ومصادر منهل الحالية لا تكفي للإجابة عنها بدقة. ننصحك بعرضها على جهة إفتاء معتمدة.",
+    generalEn:
+      "This matter needs clarification from qualified scholars, and Manhal's current sources are not enough to answer it precisely. Please consult a recognised fatwa authority.",
     ar: env(
       "MANHAL_REFERRAL_AR",
       "هذا سؤال يتعلق بحالتك الشخصية، والحكم فيه يختلف باختلاف التفاصيل. ننصحك بعرضه على جهة إفتاء معتمدة.",

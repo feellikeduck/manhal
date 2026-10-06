@@ -15,8 +15,8 @@ export interface Grade {
 /** مصدر واحد يُعطى للمودل ويرجع للمطور */
 export interface Source {
   sid: string; // S1, S2 ...
-  type: "quran" | "hadith";
-  ref: string; // "2:255" أو "bukhari:1"
+  type: "quran" | "hadith" | "term"; // term = تعريف من قاموس مصطلحات الحزمة
+  ref: string; // "2:255" أو "bukhari:1" أو "term:tawhid"
   title: string; // "البقرة: 255" أو "صحيح البخاري، 1"
   text: string; // النص العربي كما في المصدر
   translation?: string;

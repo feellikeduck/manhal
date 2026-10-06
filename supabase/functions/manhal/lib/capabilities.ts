@@ -1,12 +1,13 @@
 import { config, disclosure, label } from "./config.ts";
 import { getAyat, matchHadithText, matchQuranText } from "./db.ts";
 import { findQuranSpan, isWholeAyah } from "./checks.ts";
+import { packageTermSources } from "./package-terms.ts";
 import { finalize, sourcePayload } from "./finalize.ts";
 import { checkGlossary, findTerms, glossaryFor } from "./glossary.ts";
 import { dorarMatch } from "./dorar.ts";
 import { chatJSON } from "./openai.ts";
 import { ASK_SYSTEM, CLASSIFY_SYSTEM, EXTRACT_SYSTEM, GENERATE_SYSTEM, GUARD_SYSTEM, TRANSLATE_SYSTEM } from "./prompts.ts";
-import { gradeText, loadSources, numberSources, quranTitle, retrieve } from "./sources.ts";
+import { dedupeSources, gradeText, hintSources, loadSources, numberSources, quranTitle, retrieve } from "./sources.ts";
 import { compareWords, containsText, guessLang, wordCount } from "./text.ts";
 import type { ClaimFinding, Level, ManhalResult, Source, Status } from "./types.ts";
 import { HttpError } from "./types.ts";
@@ -30,6 +31,7 @@ interface Route {
   needs_clarification?: boolean;
   clarifying_question?: string | null;
   hostile?: boolean;
+  evidence_hints?: string[];
 }
 
 export async function ask(body: { question?: string; lang?: string; audience?: string }): Promise<Out> {
@@ -62,8 +64,16 @@ export async function ask(body: { question?: string; lang?: string; audience?: s
     };
   }
 
-  const sources = await retrieve(`${cls.search_query ?? ""}\n${question}`, lang);
   const terms = findTerms(`${question} ${cls.search_query ?? ""}`);
+  // تعريفات قاموس المصطلحات في الحزمة تأتي أولاً، ثم الآيات والأحاديث الأقرب بالمعنى
+  // ثلاث طبقات: تعريفات قاموس الحزمة، ثم الأدلة المشهورة بالبحث الحرفي، ثم الأقرب بالمعنى
+  const [byMeaning, byWording] = await Promise.all([
+    retrieve(`${cls.search_query ?? ""}\n${question}`, lang),
+    hintSources(cls.evidence_hints, lang),
+  ]);
+  const sources = numberSources(
+    dedupeSources([...packageTermSources(terms, lang), ...byWording, ...byMeaning]).slice(0, 14),
+  );
   const out = await chatJSON<{ answer: string; abstain: boolean; abstain_reason?: string | null }>(
     config.modelGenerate,
     ASK_SYSTEM,

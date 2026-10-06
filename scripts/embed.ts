@@ -22,8 +22,9 @@ async function embed(texts: string[]): Promise<number[][]> {
       body: JSON.stringify({ model: MODEL, input: texts }),
     });
     if (r.ok) return (await r.json()).data.sort((a: any, b: any) => a.index - b.index).map((d: any) => d.embedding);
-    if (attempt >= 4 || (r.status < 500 && r.status !== 429)) throw new Error(`embeddings ${r.status}: ${await r.text()}`);
-    await new Promise((ok) => setTimeout(ok, 2000 * attempt));
+    if (attempt >= 20 || (r.status < 500 && r.status !== 429)) throw new Error(`embeddings ${r.status}: ${await r.text()}`);
+    // حد الطلبات في الدقيقة: ننتظر ونكمل بدل ما نوقف
+    await new Promise((ok) => setTimeout(ok, r.status === 429 ? 15000 : 2000 * attempt));
   }
 }
 
@@ -68,7 +69,7 @@ const todo = [
 ];
 console.log(`embedding ${todo.length} chunks with ${FAKE ? "FAKE vectors" : MODEL}…`);
 let done = 0;
-for (const batch of chunk(chunk(todo, 100), 3)) {
+for (const batch of chunk(chunk(todo, 100), 1)) {
   await Promise.all(batch.map(async (part) => {
     const vecs = await embed(part.map((r) => r.content));
     const rows = part.map((r, i) => ({ ...r, embedding: `[${vecs[i].join(",")}]` }));

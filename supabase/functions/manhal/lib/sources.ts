@@ -1,7 +1,7 @@
 import { COLLECTIONS, config, GRADE_LABEL, SURAH_AR } from "./config.ts";
-import { type AyahRow, getAyat, getHadiths, type HadithRow, matchChunks } from "./db.ts";
+import { type AyahRow, getAyat, getHadiths, type HadithRow, matchChunks, matchHadithText, matchQuranText } from "./db.ts";
 import { embed } from "./openai.ts";
-import { primaryGrade } from "./text.ts";
+import { primaryGrade, wordCount } from "./text.ts";
 import type { Source } from "./types.ts";
 
 export function quranTitle(surah: number, ayah: number | string, lang: string) {
@@ -76,4 +76,39 @@ export async function retrieve(query: string, lang: string, k = config.retrieveK
   const [vec] = await embed([query]);
   const hits = await matchChunks(vec, k);
   return numberSources(await loadSources(hits, lang));
+}
+
+/** يحذف المكرر (نفس النوع والمرجع) مع الحفاظ على الترتيب */
+export function dedupeSources(list: Source[]): Source[] {
+  return list.filter((s, i) => list.findIndex((x) => x.type === s.type && x.ref === s.ref) === i);
+}
+
+/**
+ * بحث حرفي بعبارات يقترحها المودل من ألفاظ الأدلة المشهورة (مثل «حتى يتوضأ»).
+ * المودل يقترح فقط: لا يدخل إلا نص موجود في القاعدة بتطابق عالٍ.
+ */
+export async function hintSources(hints: unknown, lang: string, minScore = 0.8): Promise<Source[]> {
+  const list = Array.isArray(hints) ? hints : [];
+  const clean = [...new Set(list.map((h) => String(h ?? "").trim()).filter((h) => wordCount(h) >= 2))].slice(0, 5);
+  if (!clean.length) return [];
+  try {
+    const found = await Promise.all(clean.map(async (h) => {
+      const [q, hd] = await Promise.all([matchQuranText(h, 2), matchHadithText(h, 2)]);
+      return [
+        ...q.filter((r) => r.score >= minScore).map((r) => ({
+          kind: "quran" as const,
+          ref: `${r.surah}:${r.ayah}`,
+          score: r.score,
+        })),
+        ...hd.filter((r) => r.score >= minScore).map((r) => ({ kind: "hadith" as const, ref: r.id, score: r.score })),
+      ];
+    }));
+    const refs = found.flat()
+      .filter((r, i, a) => a.findIndex((x) => x.kind === r.kind && x.ref === r.ref) === i)
+      .slice(0, 8);
+    return refs.length ? await loadSources(refs, lang) : [];
+  } catch (e) {
+    console.error("hint search failed:", String(e));
+    return [];
+  }
 }

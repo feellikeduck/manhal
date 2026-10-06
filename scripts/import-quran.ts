@@ -23,7 +23,10 @@ const list: any[] = Array.isArray(raw) ? raw : raw.data ?? raw.ayat ?? raw.quran
 const pick = (o: any, keys: string[]) => keys.map((k) => o?.[k]).find((v) => v !== undefined && v !== null && v !== "");
 let derived = 0;
 const ayat = list.map((o) => {
-  const text = String(pick(o, ["aya_text", "text", "verse_text", "uthmani"]) ?? "").trim();
+  // نسخة المجمع v30 (يونيكود): aya_text_unicode، وفي آخرها علامة نهاية الآية ورقمها «۝١» فنشيلها
+  const text = String(pick(o, ["aya_text_unicode", "aya_text", "text", "verse_text", "uthmani"]) ?? "")
+    .replace(/\s*\u06DD[\u0660-\u0669\u06F0-\u06F90-9]*\s*$/, "")
+    .trim();
   const simple = String(pick(o, ["aya_text_emlaey", "aya_text_imlaei", "text_simple", "imlaei"]) ?? "").trim();
   return {
     surah: Number(pick(o, ["sura_no", "sura", "surah", "chapter"])),
