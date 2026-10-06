@@ -10,6 +10,7 @@
 | | |
 |---|---|
 | **منهل تشات + الربط + القوالب** (الواجهة) | [imanhal.com](https://imanhal.com) |
+| **كود الواجهة** (Lovable) | [github.com/feellikeduck/manhall](https://github.com/feellikeduck/manhall) |
 | **الـ API** (المحرك) | `https://midmkzolahrdtzswqqer.supabase.co/functions/v1/manhal` — فحص الحالة: [`/v1/health`](https://midmkzolahrdtzswqqer.supabase.co/functions/v1/manhal/v1/health) |
 
 **للجنة التحكيم:** نسخة البداية موثقة بالـ tag [`v0-start`](https://github.com/feellikeduck/manhal/releases/tag/v0-start) على أول commit (`start: hackathon baseline (4 Oct 2026)`)، وكل ما بعده بُني من 4 إلى 6 أكتوبر 2026. هذا المستودع هو **المحرك** (الـ API)، والواجهة (منهل تشات، والربط، والقوالب، وصفحة المختصين) مبنية في Lovable فوق نفس المحرك وقاعدته.
