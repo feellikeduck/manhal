@@ -1,0 +1,15 @@
+{
+  "tasks": {
+    "glossary": "deno run -A scripts/build-glossary.ts",
+    "import:quran": "deno run -A --env-file=.env scripts/import-quran.ts",
+    "import:hadeethenc": "deno run -A --env-file=.env scripts/import-hadeethenc.ts",
+    "embed": "deno run -A --env-file=.env scripts/embed.ts",
+    "key": "deno run -A --env-file=.env scripts/create-key.ts",
+    "eval": "deno run -A --env-file=.env scripts/eval.ts",
+    "serve": "deno run -A --env-file=.env supabase/functions/manhal/index.ts",
+    "test": "deno test -A tests/",
+    "deploy": "supabase functions deploy manhal --no-verify-jwt"
+  },
+  "lint": { "rules": { "exclude": ["no-explicit-any"] } },
+  "fmt": { "lineWidth": 130 }
+}
